@@ -33,10 +33,13 @@
     <div id="navbar"></div>
 
     <div class="container">
-        <h1>KCDS Gnatt Test</h1>
-        <button id="day" type="button" class="btn btn-secondary btn-sm" onclick="scale('day')">Day</button>
-        <button id="month" type="button" class="btn btn-secondary btn-sm" onclick="scale('month')">Month</button>
-        <button id="year" type="button" class="btn btn-secondary btn-sm" onclick="scale('year')">Year</button>
+        <h1>Project Tasks</h1>
+        <div class="container" style="padding-bottom:10px;">
+            <button id="day" type="button" class="btn btn-secondary btn-sm" onclick="scale('day')">Day</button>
+            <button id="month" type="button" class="btn btn-secondary btn-sm" onclick="scale('month')">Month</button>
+            <button id="year" type="button" class="btn btn-secondary btn-sm" onclick="scale('year')">Year</button>
+            <button id="today" type="button" class="btn btn-primary btn-sm" onclick="today()">Today</button>
+        </div>
         <div id="gantt_here" class="container" style="width:100%;height:400px;">
         </div>
     </div>
@@ -51,6 +54,15 @@
             gantt.plugins({
                 quick_info: true
             });
+
+            gantt.templates.date_grid = function (date, task, column) {
+                if (task && gantt.isUnscheduledTask(task) && gantt.config.show_unscheduled) {
+                    return "TODO: unscheduled task"; // gantt.templates.task_unscheduled_time(task);
+                } else {
+                    var dt = DateTime.fromJSDate(date);
+                    return dt.toLocaleString(DateTime.DATE_SHORT); //gantt.templates.grid_date_format(date);
+                }
+            }
 
             const zoomConfig = {
                 levels: [
@@ -122,12 +134,11 @@
             gantt.config.columns = [
                 { name: "text", label: "Task name", width: "*", tree: true },
                 {
-                    name: "owner", label: "Owner", template: (obj) => {
+                    name: "owner", label: "Owner", width: "80", template: (obj) => {
                         return `${obj.owner}`;
                     }
                 },
-                { name: "start_date", label: "Start time", align: "center" },
-                { name: "duration", label: "Dur", align: "center" }
+                { name: "start_date", label: "Start date", width: "100", align: "center" }
             ];
 
             gantt.config.layout = {
@@ -183,6 +194,13 @@
 
         function scale(val) {
             gantt.ext.zoom.setLevel(val);
+        }
+
+        function today() {
+            let date = new Date();
+            const visibleTimelineWidth = gantt.$task.offsetWidth / 2;
+            const position = gantt.posFromDate(date) - visibleTimelineWidth;
+            gantt.scrollTo(position);
         }
     </script>
 </body>
