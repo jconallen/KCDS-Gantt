@@ -164,29 +164,6 @@
 
             gantt.init("gantt_here");
 
-            // const data = {
-            //     "tasks": [
-            //         { id: 3, text: "Fullam", type: "project", open: true, owner: "" },
-            //         { id: 4, text: "Survey", start_date: "16-11-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "jim" },
-            //         { id: 5, text: "Floorplan Review", start_date: "02-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "skylar" },
-            //         { id: 6, text: "Material Selection", start_date: "07-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 7, text: "Pricing Set", start_date: "14-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 8, text: "Contractor Bidding", start_date: "15-12-2026", duration: 30, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 9, text: "Final Review", start_date: "16-01-2027", type: "milestone", parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 10, text: "Permit Set", start_date: "21-01-2027", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 11, text: "Order Millwork", start_date: "22-01-2027", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 12, text: "Millwork Delivery", start_date: "01-02-2027", duration: 5, parent: 3, progress: 0, open: true, owner: "" },
-            //         { id: 13, text: "Construction", start_date: "10-02-2027", duration: 30, parent: 3, progress: 0, open: true, owner: "" }
-            //     ],
-            //     "links": [
-            //         { source: 4, target: 5, type: 0 },
-            //         { source: 6, target: 7, type: 0 },
-            //         { source: 11, target: 12, type: 0 },
-            //         { source: 10, target: 13, type: 0 },
-            //         { source: 12, target: 13, type: 0 }
-            //     ]
-            // };
-
             const data = getGanttData();
             gantt.parse(data);
 
