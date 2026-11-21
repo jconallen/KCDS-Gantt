@@ -13,32 +13,34 @@ function buildProject(index, rows) {
     var project = null;
     var i = index;
 
-    if( rows[i][PROJECT] ) {
+    if (rows[i][PROJECT]) {
         project = {
             "id": rows[index][0],
             "name": rows[index][PROJECT],
             "tasks": []
         }
-        for( var r=i+1; r<rows.length; r++){
+        for (var r = i + 1; r < rows.length; r++) {
             var row = rows[r];
-            if( row[PROJECT] ) break;  // new project
+            if (row[PROJECT]) break;  // new project
             var task = {
                 "taskId": row[0],
                 "owner": row[OWNER],
                 "task": row[TASK],
                 "start": row[START],
                 "end": row[END],
-                "dependencies": row[DEPENDENCIES],
                 "progress": row[PROGRESS],
                 "notes": row[NOTES]
             }
-            project.tasks.push( task );
+            if (row[DEPENDENCIES]) {
+                task.dependencies = '' + row[DEPENDENCIES]
+            }
+            project.tasks.push(task);
         }
     }
     return project;
 }
 
-function parseWorksheet(worksheet){
+function parseWorksheet(worksheet) {
     console.log('Reading worksheet...');
     try {
 
@@ -46,84 +48,118 @@ function parseWorksheet(worksheet){
         worksheet.eachRow(function (row, rowNumber) {
             var values = row.values;
             values[0] = rowNumber;
-            allRows.push( values );
+            allRows.push(values);
         });
 
         // pull out projects
         var projects = [];
         var i = 1;
-        while( i < allRows.length ){
-            var project = buildProject( i, allRows );
-            projects.push( project);
+        while (i < allRows.length) {
+            var project = buildProject(i, allRows);
+            project.color = COLORS[ projects.length ];
+            projects.push(project);
             i += (project.tasks.length + 1);
 
-            console.log( JSON.stringify( project, null, 4) );
+            console.log(JSON.stringify(project, null, 4));
         }
 
-        localStorage.setItem('projects', JSON.stringify(projects) );
-        
+        localStorage.setItem('projects', JSON.stringify(projects));
+
 
     } catch (err) {
         console.log('Could not read this file: ' + err.message, true);
     }
 }
 
-var tasks = [
-    { id: 3, text: "Fullam", type: "project", open: true, owner: "" },
-    { id: 4, text: "Survey", start_date: "16-11-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "jim" },
-    { id: 5, text: "Floorplan Review", start_date: "02-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "skylar" },
-    { id: 6, text: "Material Selection", start_date: "07-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 7, text: "Pricing Set", start_date: "14-12-2026", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 8, text: "Contractor Bidding", start_date: "15-12-2026", duration: 30, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 9, text: "Final Review", start_date: "16-01-2027", type: "milestone", parent: 3, progress: 0, open: true, owner: "" },
-    { id: 10, text: "Permit Set", start_date: "21-01-2027", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 11, text: "Order Millwork", start_date: "22-01-2027", duration: 1, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 12, text: "Millwork Delivery", start_date: "01-02-2027", duration: 5, parent: 3, progress: 0, open: true, owner: "" },
-    { id: 13, text: "Construction", start_date: "10-02-2027", duration: 30, parent: 3, progress: 0, open: true, owner: "" }
+const COLORS = [
+    "#377EB8",
+    "#FF7F00",
+    "#4DAF4A",
+    "#E41A1C",
+    "#984EA3",
+    "#A65628",
+    "#F781BF",
+    "#008C95",
+    "#808000",
+    "#1F3A93",
+    "#D9A400",
+    "#006D5B",
+    "#E76F51",
+    "#6A3D9A",
+    "#4682B4",
+    "#B35806",
+    "#2E8B57",
+    "#C51B8A",
+    "#64748B",
+    "#A50F15"
 ]
 
-function getGanttData(){
+function getGanttData() {
     var data = {
         "tasks": [],
         "links": []
     };
     var projects = getProjects();
-    for( var p=0; p<projects.length; p++){
+    for (var p = 0; p < projects.length; p++) {
         var project = projects[p];
         var d = {
             "id": project.id,
             "text": project.name,
             "type": "project",
             "open": true,
-            "owner": ""
+            "owner": "",
+            "color": project.color
         };
         data.tasks.push(d);
-        for( var t=0; t<project.tasks.length; t++){
+        for (var t = 0; t < project.tasks.length; t++) {
             var task = project.tasks[t];
             var dtask = {
                 "id": task.taskId,
                 "text": task.task,
                 "open": true,
-                "owner": task.owner,
-                "progress": task.progress
+
+                "parent": project.id
             }
-            var dtStart = DateTime.fromISO( task.start );
-            dtask.start = dtStart.toFormat('LL-dd-yyyy');
-            if( task.end ) {
-                if( Number.isInteger(task.end) ) {
+            if (task.owner) {
+                dtask.owner = task.owner;
+            } else {
+                dtask.owner = "";
+            }
+            if (task.progress) dtask.progress = task.progress;
+            var dtStart = DateTime.fromISO(task.start);
+            dtask.start_date = dtStart.toFormat('dd-LL-yyyy');
+            if (task.end) {
+                if (Number.isInteger(task.end)) {
                     // then duration
                     dtask.end = task.end;
                 } else {
                     // try a date
-                    dtEnd = DateTime.fromISO( task.end );
+                    dtEnd = DateTime.fromISO(task.end);
                     // calc duration
                     var diff = dtEnd.diff(dtStart, 'days');
-                    dtask.end = diff.values.days;
+                    dtask.duration = diff.values.days;
                 }
             } else {
                 task.duration = 1;
             }
-            data.tasks.push( dtask );
+
+            if (typeof task.dependencies != 'undefined') {
+                var deps = task.dependencies.split(',');
+                for (var d = 0; d < deps.length; d++) {
+                    var dep = deps[d];
+                    var id = task.taskId + d;
+                    var link = {
+                        "id": id,
+                        "target": '' + task.taskId,
+                        "source": dep,
+                        "type": "0"
+                    }
+                    data.links.push(link);
+                }
+
+            }
+
+            data.tasks.push(dtask);
 
             // TODO: links
         }
@@ -131,7 +167,7 @@ function getGanttData(){
     return data;
 }
 
-function getProjects(){
+function getProjects() {
     var projects = localStorage.getItem("projects");
 
     return JSON.parse(projects);
