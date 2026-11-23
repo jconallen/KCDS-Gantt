@@ -24,15 +24,15 @@
         crossorigin="anonymous"></script>
 
     <!-- STANDARD JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.0.2/all/global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.5/all/global.js"></script>
 
     <!-- THEME JS -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.0.2/themes/monarch/global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@7.1.5/themes/monarch/global.js"></script>
 
     <!-- STYLESHEETS -->
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.0.2/skeleton.css' rel='stylesheet' />
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.0.2/themes/monarch/theme.css' rel='stylesheet' />
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.0.2/themes/monarch/palettes/purple.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.1.5/skeleton.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.1.5/themes/monarch/theme.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@7.1.5/themes/monarch/palettes/purple.css' rel='stylesheet' />
 
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico">
 </head>
@@ -42,6 +42,7 @@
 
     <div class="container">
         <h1>Calendar</h1>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addEvent()">Add Event</button>
         <div id="calendar" class="container">
 
         </div>
@@ -52,25 +53,70 @@
 
     <script type="text/javascript">
 
+        var calendar;
+
         $(function () {
             $("#navbar").load("navbar.html");
 
             var calendarEl = document.getElementById("calendar");
-            var calendar = new FullCalendar.Calendar(calendarEl, {
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 headerToolbar: {
+                    left: 'prev,next today',
                     center: 'title',
-                    end: 'today prev,next',
+                    right: 'dayGridMonth,timeGridWeek,multiMonthYear,listMonth'
                 },
                 selectable: true,
                 eventClick: function (data) {
                     var info = data.event._def.extendedProps.intake;
                     popupInfo(info);
-                }
+                },
+                // events: 
             });
+
+            const eventSource = {
+                events: [
+                    {
+                        title: 'Event1',
+                        start: '2026-11-08'
+                    },
+                    {
+                        title: 'Event2',
+                        start: '2026-11-12'
+                    }
+                    // etc...
+                ],
+                color: 'yellow',   // an option!
+                contrastColor: 'black' // an option!
+            }
+
+            var sources = getProjectEventSources();
+            for( var i=0; i<sources.length; i++){
+                calendar.addEventSource(sources[i]);
+            }
+            
+
             calendar.render();
 
         });
+
+        function popupInfo(msg) {
+            alert(msg);
+        }
+
+        function addEvent() {
+            calendar.addEvent({
+                id: 'b',
+                title: 'Some other event',
+                start: '2026-11-08'
+            }
+            );
+
+            //calendar.render();
+        }
+
+
+
 
     </script>
 </body>

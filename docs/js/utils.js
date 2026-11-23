@@ -46,9 +46,22 @@ function parseWorksheet(worksheet) {
 
         var allRows = [];
         worksheet.eachRow(function (row, rowNumber) {
-            var values = row.values;
-            values[0] = rowNumber;
-            allRows.push(values);
+            if( rowNumber > 1 ) {
+                var values = [ ''+rowNumber ];
+                for( var i=1; i<row.values.length; i++){
+                    console.log( typeof row.values[i] );
+                    if( typeof row.values[i] == 'object' ){
+                        if( row.values[i] instanceof Date ) {
+                            console.log( "DATE");
+                        }
+                        values.push( row.values[i].result )
+                    } else {
+                        values.push( row.values[i] )
+                    }
+
+                }
+                allRows.push(values);
+            }
         });
 
         // pull out projects
@@ -117,7 +130,6 @@ function getGanttData() {
                 "id": task.taskId,
                 "text": task.task,
                 "open": true,
-
                 "parent": project.id
             }
             if (task.owner) {
@@ -126,15 +138,20 @@ function getGanttData() {
                 dtask.owner = "";
             }
             if (task.progress) dtask.progress = task.progress;
-            var dtStart = DateTime.fromISO(task.start);
+            var start = task.start;
+            if( typeof task.start == 'object' ) start = task.start.result;
+            var dtStart = DateTime.fromISO(start);
             dtask.start_date = dtStart.toFormat('dd-LL-yyyy');
+            
             if (task.end) {
-                if (Number.isInteger(task.end)) {
+                var end = task.end;
+                if( typeof task.end == 'object' ) end = task.end.result;
+                if (Number.isInteger(end)) {
                     // then duration
-                    dtask.end = task.end;
+                    dtask.end = end;
                 } else {
+                    var dtEnd = DateTime.fromISO(end);
                     // try a date
-                    dtEnd = DateTime.fromISO(task.end);
                     // calc duration
                     var diff = dtEnd.diff(dtStart, 'days');
                     dtask.duration = diff.values.days;
@@ -169,8 +186,47 @@ function getGanttData() {
 
 function getProjects() {
     var projects = localStorage.getItem("projects");
-
     return JSON.parse(projects);
+}
+
+function getProjectEventSources(){
+    var sources = [];
+    const projects = getProjects();
+    for( var p=0;p<projects.length; p++){
+        var project = projects[p];
+        var es = {
+            events: [],
+            color: project.color
+        }
+        for( var t=0; t<project.tasks.length; t++){
+            var task = project.tasks[t];
+            
+            var event = {
+                "id": task.taskId,
+                "title": task.task,
+                "extendedProps": {
+                    progress: task.progress
+                },
+            }
+            var start = task.start;
+            if( typeof task.start == 'object' ) start = task.start.result;
+            var dtStart = DateTime.fromISO(start);
+            event.start = dtStart.toFormat('yyyy-LL-dd');
+            if( task.end ) {
+                var end = task.end 
+                if( typeof task.end == 'object' ){
+                    end = task.end.result;
+                }
+                var dtEnd = DateTime.fromISO(end);
+                event.end = dtEnd.toFormat('yyyy-LL-dd');
+            };
+            es.events.push(event);
+        }
+        sources.push( es );
+    }
+
+    return sources;
+
 }
 
 function navigate(url) {
