@@ -14,6 +14,7 @@ function buildProject(index, rows) {
     var i = index;
 
     if (rows[i][PROJECT]) {
+        console.log( "Building project " + rows[i][PROJECT]);
         project = {
             "id": rows[index][0],
             "name": rows[index][PROJECT],
@@ -49,16 +50,14 @@ function parseWorksheet(worksheet) {
             if( rowNumber > 1 ) {
                 var values = [ ''+rowNumber ];
                 for( var i=1; i<row.values.length; i++){
-                    console.log( typeof row.values[i] );
-                    if( typeof row.values[i] == 'object' ){
-                        if( row.values[i] instanceof Date ) {
-                            console.log( "DATE");
-                        }
+                    if( row.values[i] instanceof Date ) {
+                        var dt = DateTime.fromJSDate(row.values[i] )
+                        values.push( dt.toISO() );
+                    } else if( typeof row.values[i] == 'object' ){
                         values.push( row.values[i].result )
                     } else {
                         values.push( row.values[i] )
                     }
-
                 }
                 allRows.push(values);
             }
@@ -66,18 +65,15 @@ function parseWorksheet(worksheet) {
 
         // pull out projects
         var projects = [];
-        var i = 1;
+        var i = 0;
         while (i < allRows.length) {
             var project = buildProject(i, allRows);
             project.color = COLORS[ projects.length ];
             projects.push(project);
             i += (project.tasks.length + 1);
-
-            console.log(JSON.stringify(project, null, 4));
         }
 
         localStorage.setItem('projects', JSON.stringify(projects));
-
 
     } catch (err) {
         console.log('Could not read this file: ' + err.message, true);
@@ -161,7 +157,8 @@ function getGanttData() {
             }
 
             if (typeof task.dependencies != 'undefined') {
-                var deps = task.dependencies.split(',');
+                console.log( "task.dependencies=" + task.dependencies + " [" +typeof task.dependencies+"]" );
+                var deps = task.dependencies.toString().split(',');
                 for (var d = 0; d < deps.length; d++) {
                     var dep = deps[d];
                     var id = task.taskId + d;
