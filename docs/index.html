@@ -48,7 +48,7 @@
         
         <div class="container">
             <h4>Projects</h4>
-            <div id="divProjects" class="container" style="padding-top:10px;">
+            <div id="divProjects" class="container">
             </div>
         </div>
 
@@ -121,7 +121,7 @@
                 var end = dtEnd.toFormat("L/d/yy"); 
 
                 var template = `            <div class="row">
-                <div class="col-1 mb-1">
+                <div class="col-2 mb-1">
                     <span class="border" style="background-color:${color};" width="40"><i class="bi bi-bar-chart-steps"></i>&nbsp;</span>${name}</div>
                 <div class="col-10">
                     [ ${start} - ${end} ], ${project.tasks.length} tasks, involved: ${owners}
