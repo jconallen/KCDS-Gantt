@@ -33,19 +33,26 @@
 <body>
     <div id="navbar"></div>
 
+
     <div class="container">
         <h1>Projects Visualizer</h1>
 
-        <div class="container" style="padding-bottom:10px;">
-            <button id="clear" type="button" class="btn btn-secondary btn-sm" onclick="clearData()">Clear Data</button>
+        <div class="container mb-3">
+            <div class="row mb-2">
+                <div class="col-4">
+                    <label class="form-label" for="file">Upload spreadsheet with project data</label>
+                    <input type="file" class="form-control" id="file" width="20" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div id="sourceControl" class="col-4">
+                    
+                </div>
+            </div>
+
         </div>
 
-        <div class="container">
-            <label class="drop" id="drop">
-                <input type="file" id="file" accept=".xlsx">
-            </label>
-        </div>
-        
         <div class="container">
             <h4>Projects</h4>
             <div id="divProjects" class="container">
@@ -63,64 +70,84 @@
             $("#navbar").load("navbar.html");
         });
 
+        window.addEventListener("load", (event) => {
+            refresh();
+        });
+
         const fileInput = document.getElementById('file');
         fileInput.addEventListener('change', () => fileInput.files[0] && load(fileInput.files[0]));
-        // ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
-        // ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
 
         async function load(file) {
             if (!/\.xlsx$/i.test(file.name)) {
                 console.log('ExcelJS reads .xlsx files only. Save older .xls files as .xlsx first.', true);
                 return;
             }
-            console.log('Reading ' + file.name );
+            console.log('Reading ' + file.name);
             try {
                 workbook = new ExcelJS.Workbook();
                 await workbook.xlsx.load(await file.arrayBuffer());
                 const worksheet = workbook.getWorksheet('Projects');
                 parseWorksheet(worksheet);
+                // save metadata
+                var lastModified = file.lastModified;
+                var dt = DateTime.fromMillis(lastModified);
+                var metaData = { "filename": file.name, "lastModified": dt };
+                localStorage.setItem('metaData', JSON.stringify(metaData));
+                refresh();
             } catch (err) {
                 console.log('Could not read this file: ' + err.message, true);
                 alert('Could not read this file: ' + err.message);
             }
         }
 
-        function refresh(){
+        function buildSource(){
+            var metaData = JSON.parse(localStorage.getItem('metaData'));
+            if( metaData ) {
+                var dt = DateTime.fromISO( metaData.lastModified );
+                var strLastModified = dt.toLocaleString(DateTime.DATE_SHORT);
+                var srcCtrl = `<span id="source"><b>Source:</b> ${metaData.filename}, uploaded: ${strLastModified}</span> <button id="clear"
+                        type="button" class="btn btn-secondary btn-sm" onclick="clearData()">Clear Source</button>`;
+                $('#sourceControl').html(srcCtrl);
+            }
+        }
+
+        function refresh() {
             $('#divProjects').empty();
             var projects = getProjects();
-            for( const project of projects ) {
-                console.log( project.name );
-                var color = project.color;
-                var name = project.name;
-                var owners = "";
-                var dtStart = null;
-                var dtEnd = null;
-                for(const task of project.tasks){
-                    if( !dtStart  ) {
-                        dtStart = DateTime.fromISO(task.start);
-                        dtEnd = DateTime.fromISO(task.start);
-                    } else if( dtStart > DateTime.fromISO(task.start) ){
-                        dtStart = DateTime.fromISO(task.start);
-                        if( dtStart > dtEnd ) dtEnd = dtStart;
-                    }
+            if (projects) {
+                for (const project of projects) {
+                    console.log(project.name);
+                    var color = project.color;
+                    var name = project.name;
+                    var owners = "";
+                    var dtStart = null;
+                    var dtEnd = null;
+                    for (const task of project.tasks) {
+                        if (!dtStart) {
+                            dtStart = DateTime.fromISO(task.start);
+                            dtEnd = DateTime.fromISO(task.start);
+                        } else if (dtStart > DateTime.fromISO(task.start)) {
+                            dtStart = DateTime.fromISO(task.start);
+                            if (dtStart > dtEnd) dtEnd = dtStart;
+                        }
 
-                    if( task.end ) {
-                        var dt = DateTime.fromISO(task.end);
-                        if( dt > dtEnd ) {
-                            dtEnd = dt;
+                        if (task.end) {
+                            var dt = DateTime.fromISO(task.end);
+                            if (dt > dtEnd) {
+                                dtEnd = dt;
+                            }
+                        }
+
+                        if (task.owner && !owners.includes(task.owner)) {
+                            if (owners.length > 1) owners += ", ";
+                            owners += task.owner;
                         }
                     }
 
-                    if( task.owner && !owners.includes(task.owner) ) {
-                        if( owners.length > 1 ) owners += ", ";
-                        owners += task.owner;
-                    }
-                }
+                    var start = dtStart.toFormat("L/d/yy");
+                    var end = dtEnd.toFormat("L/d/yy");
 
-                var start = dtStart.toFormat("L/d/yy");
-                var end = dtEnd.toFormat("L/d/yy"); 
-
-                var template = `            <div class="row">
+                    var template = `            <div class="row">
                 <div class="col-2 mb-1">
                     <span class="border" style="background-color:${color};" width="40"><i class="bi bi-bar-chart-steps"></i>&nbsp;</span>${name}</div>
                 <div class="col-10">
@@ -128,17 +155,20 @@
                 </div>
             </div>`;
 
-                $('#divProjects').append(template);
-                
+                    $('#divProjects').append(template);
+                }
+                buildSource();
             }
 
         }
 
-        function clearData(){
+        function clearData() {
             localStorage.clear();
+            $('#file').val('');
+            $('#sourceControl').empty();
+            refresh();
         }
 
-        refresh();
 
     </script>
 </body>
