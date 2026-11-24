@@ -34,7 +34,7 @@
     <div id="navbar"></div>
 
     <div class="container">
-        <h1>Project Visualizer</h1>
+        <h1>Projects Visualizer</h1>
 
         <div class="container" style="padding-bottom:10px;">
             <button id="clear" type="button" class="btn btn-secondary btn-sm" onclick="clearData()">Clear Data</button>
@@ -43,8 +43,13 @@
         <div class="container">
             <label class="drop" id="drop">
                 <input type="file" id="file" accept=".xlsx">
-                <span>Choose an Excel file, or drop it here</span>
             </label>
+        </div>
+        
+        <div class="container">
+            <h4>Projects</h4>
+            <div id="divProjects" class="container" style="padding-top:10px;">
+            </div>
         </div>
 
     </div>
@@ -54,10 +59,14 @@
 
     <script type="text/javascript">
 
+        $(function () {
+            $("#navbar").load("navbar.html");
+        });
+
         const fileInput = document.getElementById('file');
         fileInput.addEventListener('change', () => fileInput.files[0] && load(fileInput.files[0]));
-        ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
-        ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+        // ['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+        // ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
 
         async function load(file) {
             if (!/\.xlsx$/i.test(file.name)) {
@@ -72,18 +81,64 @@
                 parseWorksheet(worksheet);
             } catch (err) {
                 console.log('Could not read this file: ' + err.message, true);
+                alert('Could not read this file: ' + err.message);
             }
         }
 
+        function refresh(){
+            $('#divProjects').empty();
+            var projects = getProjects();
+            for( const project of projects ) {
+                console.log( project.name );
+                var color = project.color;
+                var name = project.name;
+                var owners = "";
+                var dtStart = null;
+                var dtEnd = null;
+                for(const task of project.tasks){
+                    if( !dtStart  ) {
+                        dtStart = DateTime.fromISO(task.start);
+                        dtEnd = DateTime.fromISO(task.start);
+                    } else if( dtStart > DateTime.fromISO(task.start) ){
+                        dtStart = DateTime.fromISO(task.start);
+                        if( dtStart > dtEnd ) dtEnd = dtStart;
+                    }
 
-        $(function () {
-            $("#navbar").load("navbar.html");
-        });
+                    if( task.end ) {
+                        var dt = DateTime.fromISO(task.end);
+                        if( dt > dtEnd ) {
+                            dtEnd = dt;
+                        }
+                    }
+
+                    if( task.owner && !owners.includes(task.owner) ) {
+                        if( owners.length > 1 ) owners += ", ";
+                        owners += task.owner;
+                    }
+                }
+
+                var start = dtStart.toFormat("L/d/yy");
+                var end = dtEnd.toFormat("L/d/yy"); 
+
+                var template = `            <div class="row">
+                <div class="col-1 mb-1">
+                    <span class="border" style="background-color:${color};" width="40"><i class="bi bi-bar-chart-steps"></i>&nbsp;</span>${name}</div>
+                <div class="col-10">
+                    [ ${start} - ${end} ], ${project.tasks.length} tasks, involved: ${owners}
+                </div>
+            </div>`;
+
+                $('#divProjects').append(template);
+                
+            }
+
+        }
 
         function clearData(){
             localStorage.clear();
-
         }
+
+        refresh();
 
     </script>
 </body>

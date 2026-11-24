@@ -1,15 +1,15 @@
 const DateTime = luxon.DateTime;
 
-const PROJECT = 1;
-const OWNER = 2;
-const TASK = 3;
-const START = 4;
-const END = 5;
-const DEPENDENCIES = 6;
-const PROGRESS = 7;
-const NOTES = 8;
-
 function buildProject(index, rows) {
+    const PROJECT = 1;
+    const OWNER = 2;
+    const TASK = 3;
+    const START = 4;
+    const END = 5;
+    const DEPENDENCIES = 6;
+    const PROGRESS = 7;
+    const NOTES = 8;
+
     var project = null;
     var i = index;
 
